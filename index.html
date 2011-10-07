@@ -28,7 +28,7 @@
 <th title="Total market cap in BTC">Total BTC</th>
 <th title="Value of one coin in USD">USD</th>
 <th title="Total market cap in USD">Total USD</th>
-<!-- <th title="Percent of the overall pie (TBD)">Percent</th> -->
+<th title="Percent of the overall pie (TBD)">Percent</th>
 </tr>
 </table>
 
@@ -106,9 +106,9 @@ var ColumnIndex = {
 	TotalBTC : 4,
 	USD: 5,
 	TotalUSD : 6,
-	//Percent : 7,
+	Percent : 7,
 	
-	Max : 6
+	Max : 7
 }
 	
 // global 
@@ -170,14 +170,20 @@ function getDataAndFillTable(coin, tickerId, colIndex) {
 			}
 			
 			if (coin.name == 'Bitcoin') {
-			  setCell('Bitcoin', ColumnIndex.TotalUSD, getData('totalCoins') * getData('price'));
+				var totalUsd = getData('totalCoins') * getData('price');
+				setCell('Bitcoin', ColumnIndex.TotalUSD, totalUsd);
+				coin.calculatedData.totalUsd = totalUsd;
+				updatePercent();
 			} else {
 				var totalBTC = getData('totalCoins') * getData('price');
 				setCell(coin.name, ColumnIndex.TotalBTC, totalBTC);
 			
 				function calcUSD() {
 					setCell(coin.name, ColumnIndex.USD, usdPerBtc * getData('price'));
-					setCell(coin.name, ColumnIndex.TotalUSD, usdPerBtc * totalBTC);
+					var totalUsd = usdPerBtc * totalBTC;
+					coin.calculatedData.totalUsd = totalUsd;
+					setCell(coin.name, ColumnIndex.TotalUSD, totalUsd);
+					updatePercent();
 				}
 				
 				if (usdPerBtc) {
@@ -192,7 +198,7 @@ function getDataAndFillTable(coin, tickerId, colIndex) {
 }
 
 $(coinTypes).each(function() {
-	var row = $("<tr id='" + this.name + "'><td>" + this.name + "</td></tr>");
+	var row = $("<tr class='coinrow' id='" + this.name + "'><td>" + this.name + "</td></tr>");
 	$('#coins').append(row);
 	while (row.find('td').length < ColumnIndex.Max + 1) {
 		var td = document.createElement('td');
@@ -206,6 +212,20 @@ $(coinTypes).each(function() {
 	if (this.name == 'Bitcoin')
 		setCell(this.name, ColumnIndex.BTC, 1);
 });
+
+function updatePercent() {
+	var entireMarketCap = 0;
+	$(coinTypes).each(function(){
+		if (this.calculatedData && this.calculatedData.totalUsd)
+			entireMarketCap += this.calculatedData.totalUsd;
+	});
+	$(coinTypes).each(function(){
+		if (!this.calculatedData || !this.calculatedData.totalUsd)
+			return true;
+		percent = this.calculatedData.totalUsd / entireMarketCap * 100;
+		setCell(this.name, ColumnIndex.Percent, percent);
+	});
+}
 
 </script>
 </body>
