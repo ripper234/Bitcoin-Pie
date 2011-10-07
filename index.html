@@ -19,7 +19,7 @@
 <p>This page shows the value and <a href="http://en.wikipedia.org/wiki/Market_capitalization">market cap</a> of Bitcoin and some of its clones.</p>
 
 <table>
-<table border="1">
+<table id='coins' border="1">
 <tr>
 <th></th>
 <th title="Number of mined blocks">Blocks</th>
@@ -30,10 +30,6 @@
 <th title="Total market cap in USD">Total USD</th>
 <!-- <th title="Percent of the overall pie (TBD)">Percent</th> -->
 </tr>
-<!-- TODO: Calculate these from the coinTypes -->
-<tr id='bitcoin'><td>Bitcoin</td></tr>
-<tr id='namecoin'><td>Namecoin</td></tr>
-<tr id='tenebrix'><td>Tenebrix</td></tr>
 </table>
 
 <div id='piebackground'></div>
@@ -71,17 +67,17 @@ var Extractors = {
 
 <!-- This is where you define the different coins -->
 var coinTypes = 
-	[{	id: 'bitcoin', 
+	[{	name: 'Bitcoin',
 		price : {url : 'https://mtgox.com/api/0/data/ticker.php', extractor : Extractors.json('ticker.avg')}, 
 		blockCount : {url : 'http://blockexplorer.com/q/getblockcount', extractor : Extractors.nop},
 		coinsPerBlock : 50},
-	 {	id: 'namecoin', 
+	 {	name: 'Namecoin', 
 		price : {url : 'https://exchange.bitparking.com/main', extractor : Extractors.regex(
 			'<th>Low:</th><td class="coin">(\\d+(?:\\.)\\d+)',
 			'<th>High:</th><td class="coin">(\\d+(?:\\.)\\d+)')}, 
 		totalCoins : {url : 'http://blockexplorer.sytes.net/chain/Namecoin/q/totalbc', extractor : Extractors.nop},
 		coinsPerBlock : 50},
-	{	id: 'tenebrix',
+	{	name: 'Tenebrix',
 		price : {url : 'https://btc-e.com/tbx_exchanger', extractor : Extractors.regex(
 			"<span id='min_price'>(\\d+(?:\\.)\\d+)",
 			"<span id='max_price'>(\\d+(?:\\.)\\d+)")},
@@ -154,44 +150,44 @@ function getDataAndFillTable(coin, tickerId, colIndex) {
 		
 	getData(ticker.url, function(data) {
 		var parsedData = ticker.extractor(data.contents);
-		if (coin.id == 'bitcoin' && colIndex == ColumnIndex.BTC) {
+		if (coin.name == 'bitcoin' && colIndex == ColumnIndex.BTC) {
 			colIndex = ColumnIndex.USD;
 			usdPerBtc = parsedData;
 			$(handlerToCallAfterFindingBtcUsdRate).each(function(){this();});
 		}
-		setCell(coin.id, colIndex, parsedData, ticker.url);
+		setCell(coin.name, colIndex, parsedData, ticker.url);
 		
 		if (!coin.fetchedData)
 			coin.fetchedData = {};
 		coin.fetchedData[tickerId] = parsedData;
 		if (Object.keys(coin.fetchedData).length == 2) {
 			coin.calculatedData = {};
-			function getData(id) {
-				if (coin.fetchedData[id])
-					return coin.fetchedData[id];
-				if (coin.calculatedData[id])
-					return coin.calculatedData[id];
+			function getData(name) {
+				if (coin.fetchedData[name])
+					return coin.fetchedData[name];
+				if (coin.calculatedData[name])
+					return coin.calculatedData[name];
 					
-				throw "Can't get data for id " + id;
+				throw "Can't get data for " + name;
 			}
 			if (!coin.fetchedData.totalCoins && coin.fetchedData.blockCount) {
 				coin.calculatedData.totalCoins = coin.fetchedData.blockCount * coin.coinsPerBlock;
-				setCell(coin.id, ColumnIndex.Coins, coin.calculatedData.totalCoins);
+				setCell(coin.name, ColumnIndex.Coins, coin.calculatedData.totalCoins);
 			}
 			if (!coin.fetchedData.blockCount && coin.fetchedData.totalCoins) {
 				coin.calculatedData.blocks = coin.fetchedData.totalCoins / coin.coinsPerBlock;
-				setCell(coin.id, ColumnIndex.Blocks, coin.calculatedData.blocks);
+				setCell(coin.name, ColumnIndex.Blocks, coin.calculatedData.blocks);
 			}
 			
-			if (coin.id == 'bitcoin') {
-			  setCell('bitcoin', ColumnIndex.TotalUSD, getData('totalCoins') * getData('price'));
+			if (coin.name == 'Bitcoin') {
+			  setCell('Bitcoin', ColumnIndex.TotalUSD, getData('totalCoins') * getData('price'));
 			} else {
 				var totalBTC = getData('totalCoins') * getData('price');
-				setCell(coin.id, ColumnIndex.TotalBTC, totalBTC);
+				setCell(coin.name, ColumnIndex.TotalBTC, totalBTC);
 			
 				function calcUSD() {
-					setCell(coin.id, ColumnIndex.USD, usdPerBtc * getData('price'));
-					setCell(coin.id, ColumnIndex.TotalUSD, usdPerBtc * totalBTC);
+					setCell(coin.name, ColumnIndex.USD, usdPerBtc * getData('price'));
+					setCell(coin.name, ColumnIndex.TotalUSD, usdPerBtc * totalBTC);
 				}
 				
 				if (usdPerBtc) {
@@ -206,12 +202,15 @@ function getDataAndFillTable(coin, tickerId, colIndex) {
 }
 
 $(coinTypes).each(function() {
+	var foo = $("<tr id='" + this.name + "'><td>" + this.name + "</td></tr>");
+	$('#coins').append(foo);
+
 	getDataAndFillTable(this, 'price', ColumnIndex.BTC);
 	getDataAndFillTable(this, 'blockCount', ColumnIndex.Blocks);
 	getDataAndFillTable(this, 'totalCoins', ColumnIndex.Coins);
 	
-	if (this.id == 'bitcoin')
-		setCell('bitcoin', ColumnIndex.BTC, 1);
+	if (this.name == 'Bitcoin')
+		setCell(this.name, ColumnIndex.BTC, 1);
 });
 
 </script>
