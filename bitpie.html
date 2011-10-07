@@ -9,6 +9,7 @@
 <table border="1">
 <tr>
 <th></th>
+<th>Blocks</th>
 <th>Coins</th>
 <th>BTC</th>
 <th>USD</th>
@@ -27,14 +28,21 @@
 
 <script type="text/javascript">
 
+// http://stackoverflow.com/questions/149055/how-can-i-format-numbers-as-money-in-javascript/149099#149099
+Number.prototype.formatMoney = function(c, d, t){
+var n = this, c = isNaN(c = Math.abs(c)) ? 2 : c, d = d == undefined ? "," : d, t = t == undefined ? "." : t, s = n < 0 ? "-" : "", i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "", j = (j = i.length) > 3 ? j % 3 : 0;
+   return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+ };
+ 
 var ColumnIndex = {
-	Coins: 1,
-	BTC: 2,
-	USD: 3,
-	TotalUSD : 4,
-	Percent : 5,
+	Blocks: 1,
+	Coins: 2,
+	BTC: 3,
+	USD: 4,
+	TotalUSD : 5,
+	Percent : 6,
 	
-	Max : 5
+	Max : 6
 }
 
 var Extractors = {
@@ -50,7 +58,6 @@ var Extractors = {
 			return obj;
 		}
 	},
-	nop : function() {return function(x){return x;};}
 };
 
 
@@ -59,7 +66,9 @@ var Extractors = {
 var coinTypes = 
 	[{	id: 'bitcoin', 
 		price : {url : 'https://mtgox.com/api/0/data/ticker.php', extractor : Extractors.json('contents.ticker.avg')}, 
-		blockcount : {url : 'http://blockexplorer.com/q/getblockcount'}, extractor : Extractors.nop}
+		blockCount : {url : 'http://blockexplorer.com/q/getblockcount', extractor : Extractors.json('contents')},
+		coinsPerBlock : 50,
+	}
 	];
 
 	
@@ -80,6 +89,10 @@ $('tr').each(function(){
 });
 
 function setCell(rowId, columnIndex, value) {
+	var rounded = Math.round(value);
+	var decimal = (rounded == value) ? 0 : 2;
+	value = value.formatMoney(decimal, '.', ',');
+	
 	var row = $('#' + rowId);
 	var cell = $(row.find('td')[columnIndex]);
 	cell.html(value);
@@ -89,15 +102,31 @@ function getData(url, callback) {
 	result = $.getJSON('http://anyorigin.com/get?url=' + url + '&callback=?', callback);
 }
 
-function getDataAndFillTable(ticker, rowId, colIndex) {
+function getDataAndFillTable(coin, tickerId, colIndex) {
+	var ticker = coin[tickerId];
 	getData(ticker.url, function(data) {
 		var parsedData = ticker.extractor(data);
-		setCell(rowId, colIndex, parsedData);
+		setCell(coin.id, colIndex, parsedData);
+		
+		if (!coin.fetchedData)
+			coin.fetchedData = {};
+		coin.fetchedData[tickerId] = parsedData;
+		if (Object.keys(coin.fetchedData).length == 2) {
+			var coins = coin.coinsPerBlock * coin.fetchedData.blockCount;
+			var totalUsd = coins * coin.fetchedData.price;
+			
+			setCell(coin.id, ColumnIndex.Coins, coins);
+			setCell(coin.id, ColumnIndex.TotalUSD, totalUsd);
+		}
 	});
 }
 
 $(coinTypes).each(function() {
-	getDataAndFillTable(this.price, this.id, ColumnIndex.USD);
+	getDataAndFillTable(this, 'price', ColumnIndex.USD);
+	getDataAndFillTable(this, 'blockCount', ColumnIndex.Blocks);
+	
+	if (this.id == 'bitcoin')
+		setCell('bitcoin', ColumnIndex.BTC, 1);
 });
 
 </script>
