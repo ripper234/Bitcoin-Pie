@@ -67,9 +67,10 @@ var Extractors = {
 	nop : 	function(obj) { return obj;}
 };
 
-function createCoinBySytesAndBtce(name, symbol, blockreward) {
+function createCoinBySytesAndBtce(name, symbol, url, blockreward) {
 	return {
 		name: name,
+		url: url,
 		price : {url : 'https://btc-e.com/' + symbol + '_exchanger', extractor : Extractors.regex(
 			"<span id='min_price'>(\\d+(?:\\.)\\d+)",
 			"<span id='max_price'>(\\d+(?:\\.)\\d+)")},
@@ -82,17 +83,19 @@ function createCoinBySytesAndBtce(name, symbol, blockreward) {
 <!-- This is where you define the different coins -->
 var coinTypes = 
 	[{	name: 'Bitcoin',
+		url: 'http://bitcoin.org',
 		price : {url : 'https://mtgox.com/api/0/data/ticker.php', extractor : Extractors.json('ticker.avg')}, 
 		blockCount : {url : 'http://blockexplorer.com/q/getblockcount', extractor : Extractors.nop},
 		coinsPerBlock : 50},
-	createCoinBySytesAndBtce('Tenebrix', 'tbx', 25),
+	createCoinBySytesAndBtce('Tenebrix', 'tbx', 'http://tenebrix.org', 25),
 	{	name: 'Namecoin', 
+		url: 'http://dot-bit.org/',
 		price : {url : 'https://exchange.bitparking.com/main', extractor : Extractors.regex(
 			'<th>Low:</th><td class="coin">(\\d+(?:\\.)\\d+)',
 			'<th>High:</th><td class="coin">(\\d+(?:\\.)\\d+)')}, 
 		totalCoins : {url : 'http://blockexplorer.sytes.net/chain/Namecoin/q/totalbc', extractor : Extractors.nop},
 		coinsPerBlock : 50},
-	createCoinBySytesAndBtce('SolidCoin', 'sc', 25)
+	createCoinBySytesAndBtce('SolidCoin', 'sc', 'http://solidcoin.info/', 25)
 	];
 
 	
@@ -120,6 +123,10 @@ var ColumnIndex = {
 var usdPerBtc;
 var handlerToCallAfterFindingBtcUsdRate = [];
 
+function makeLink(url, text) {
+	return "<a href='" + url + "'>" + text + "</a>";
+}
+	
 function setCell(rowId, columnIndex, value, opt_url) {
 	var rounded = Math.round(value);
 	var decimal = (rounded == value) ? 0 : 3;
@@ -128,9 +135,6 @@ function setCell(rowId, columnIndex, value, opt_url) {
 	var row = $('#' + rowId);
 	var cell = $(row.find('td')[columnIndex]);
 	
-	function makeLink(url, text) {
-		return "<a href='" + url + "'>" + text + "</a>";
-	}
 	cell.html(opt_url ? makeLink(opt_url, value) : value);
 }
 
@@ -203,7 +207,7 @@ function getDataAndFillTable(coin, tickerId, colIndex) {
 }
 
 $(coinTypes).each(function() {
-	var row = $("<tr class='coinrow' id='" + this.name + "'><td>" + this.name + "</td></tr>");
+	var row = $("<tr class='coinrow' id='" + this.name + "'><td>" + makeLink(this.url, this.name) + "</td></tr>");
 	$('#coins').append(row);
 	while (row.find('td').length < ColumnIndex.Max + 1) {
 		var td = document.createElement('td');
