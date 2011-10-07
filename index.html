@@ -62,7 +62,16 @@ var Extractors = {
 	nop : 	function(obj) { return obj;}
 };
 
-
+function createCoinBySytesAndBtce(name, symbol, blockreward) {
+	return {
+		name: name,
+		price : {url : 'https://btc-e.com/' + symbol + '_exchanger', extractor : Extractors.regex(
+			"<span id='min_price'>(\\d+(?:\\.)\\d+)",
+			"<span id='max_price'>(\\d+(?:\\.)\\d+)")},
+		totalCoins : {url : 'http://blockexplorer.sytes.net/chain/' + name + '/q/totalbc', extractor : Extractors.nop},
+		coinsPerBlock : blockreward
+	};
+}
 
 
 <!-- This is where you define the different coins -->
@@ -71,18 +80,14 @@ var coinTypes =
 		price : {url : 'https://mtgox.com/api/0/data/ticker.php', extractor : Extractors.json('ticker.avg')}, 
 		blockCount : {url : 'http://blockexplorer.com/q/getblockcount', extractor : Extractors.nop},
 		coinsPerBlock : 50},
-	 {	name: 'Namecoin', 
+	createCoinBySytesAndBtce('Tenebrix', 'tbx', 25),
+	{	name: 'Namecoin', 
 		price : {url : 'https://exchange.bitparking.com/main', extractor : Extractors.regex(
 			'<th>Low:</th><td class="coin">(\\d+(?:\\.)\\d+)',
 			'<th>High:</th><td class="coin">(\\d+(?:\\.)\\d+)')}, 
 		totalCoins : {url : 'http://blockexplorer.sytes.net/chain/Namecoin/q/totalbc', extractor : Extractors.nop},
 		coinsPerBlock : 50},
-	{	name: 'Tenebrix',
-		price : {url : 'https://btc-e.com/tbx_exchanger', extractor : Extractors.regex(
-			"<span id='min_price'>(\\d+(?:\\.)\\d+)",
-			"<span id='max_price'>(\\d+(?:\\.)\\d+)")},
-		totalCoins : {url : 'http://blockexplorer.sytes.net/chain/Tenebrix/q/totalbc', extractor : Extractors.nop},
-		coinsPerBlock : 25}
+	createCoinBySytesAndBtce('SolidCoin', 'sc', 25)
 	];
 
 	
@@ -110,21 +115,6 @@ var ColumnIndex = {
 var usdPerBtc;
 var handlerToCallAfterFindingBtcUsdRate = [];
 
-// prepare empty table
-var header = true;
-$('tr').each(function(){
-	if (header) {
-		header = false;
-		return true;
-	}
-	var row = $(this);
-	while (row.find('td').length < ColumnIndex.Max + 1) {
-		var td = document.createElement('td');
-		//$(td).html("");
-		row.append(td);
-	}
-});
-
 function setCell(rowId, columnIndex, value, opt_url) {
 	var rounded = Math.round(value);
 	var decimal = (rounded == value) ? 0 : 3;
@@ -150,7 +140,7 @@ function getDataAndFillTable(coin, tickerId, colIndex) {
 		
 	getData(ticker.url, function(data) {
 		var parsedData = ticker.extractor(data.contents);
-		if (coin.name == 'bitcoin' && colIndex == ColumnIndex.BTC) {
+		if (coin.name == 'Bitcoin' && colIndex == ColumnIndex.BTC) {
 			colIndex = ColumnIndex.USD;
 			usdPerBtc = parsedData;
 			$(handlerToCallAfterFindingBtcUsdRate).each(function(){this();});
@@ -202,9 +192,13 @@ function getDataAndFillTable(coin, tickerId, colIndex) {
 }
 
 $(coinTypes).each(function() {
-	var foo = $("<tr id='" + this.name + "'><td>" + this.name + "</td></tr>");
-	$('#coins').append(foo);
-
+	var row = $("<tr id='" + this.name + "'><td>" + this.name + "</td></tr>");
+	$('#coins').append(row);
+	while (row.find('td').length < ColumnIndex.Max + 1) {
+		var td = document.createElement('td');
+		row.append(td);
+	}
+	
 	getDataAndFillTable(this, 'price', ColumnIndex.BTC);
 	getDataAndFillTable(this, 'blockCount', ColumnIndex.Blocks);
 	getDataAndFillTable(this, 'totalCoins', ColumnIndex.Coins);
