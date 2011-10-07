@@ -1,1 +1,212 @@
-"My GitHub Page" 
+<html>
+<head>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+<style type="text/css">
+#piebackground {
+	background-image: url('images/pie.jpg');
+	width: 500px;
+	height: 364px;
+	position: relative;
+	top: 50px;
+	
+}
+</style>
+</head>
+<body>
+<h1>The Alternative Bitcoin Pie Page <small>(<a href="https://github.com/ripper234/Bitcoin-Pie">github</a>)</small></h1>
+
+<table>
+<table border="1">
+<tr>
+<th></th>
+<th title="Number of mined blocks">Blocks</th>
+<th title="Number of mined coins">Coins</th>
+<th title="Value of one coin in BTC">BTC</th>
+<th title="Total market cap in BTC">Total BTC</th>
+<th title="Value of one coin in USD">USD</th>
+<th title="Total market cap in USD">Total USD</th>
+<!-- <th title="Percent of the overall pie (TBD)">Percent</th> -->
+</tr>
+<tr id='bitcoin'>
+<td>Bitcoin</td>
+</tr>
+<tr id='namecoin'>
+<td>Namecoin</td>
+</tr>
+</table>
+
+<div id='piebackground'></div>
+
+<script type="text" src="http://google.com?callback=some_func"></script>
+
+<script type="text/javascript">
+
+var Extractors = {
+	json : function(path) {
+		return function(obj) {
+			var parts = path.split('.');
+			if (parts.length < 1)
+				throw ("Failed to parse path: " + path);
+			
+			$(parts).each(function() {
+				obj = obj[this];
+			});
+			return obj;
+		}
+	},
+	regex : function(lowRegex, highRegex) {
+		return function(html) {
+			var low = parseFloat(new RegExp(lowRegex, 'g').exec(html)[1]);
+			var high = parseFloat(new RegExp(highRegex, 'g').exec(html)[1]);
+			
+			return (low + high) / 2;
+		}
+	},
+	nop : 	function(obj) { return obj;}
+};
+
+
+
+
+<!-- This is where you define the different coins -->
+var coinTypes = 
+	[{	id: 'bitcoin', 
+		price : {url : 'https://mtgox.com/api/0/data/ticker.php', extractor : Extractors.json('ticker.avg')}, 
+		blockCount : {url : 'http://blockexplorer.com/q/getblockcount', extractor : Extractors.nop},
+		coinsPerBlock : 50},
+	 {	id: 'namecoin', 
+		price : {url : 'https://exchange.bitparking.com/main', extractor : Extractors.regex(
+			'<th>Low:</th><td class="coin">(\\d+(?:\\.)\\d+)',
+			'<th>High:</th><td class="coin">(\\d+(?:\\.)\\d+)')}, 
+		totalCoins : {url : 'http://blockexplorer.sytes.net/chain/Namecoin/q/totalbc', extractor : Extractors.nop},
+		coinsPerBlock : 50},	
+	];
+
+	
+	
+	
+// http://stackoverflow.com/questions/149055/how-can-i-format-numbers-as-money-in-javascript/149099#149099
+Number.prototype.formatMoney = function(c, d, t){
+var n = this, c = isNaN(c = Math.abs(c)) ? 2 : c, d = d == undefined ? "," : d, t = t == undefined ? "." : t, s = n < 0 ? "-" : "", i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "", j = (j = i.length) > 3 ? j % 3 : 0;
+   return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+};
+ 
+var ColumnIndex = {
+	Blocks: 1,
+	Coins: 2,
+	BTC: 3,
+	TotalBTC : 4,
+	USD: 5,
+	TotalUSD : 6,
+	//Percent : 7,
+	
+	Max : 6
+}
+	
+// global 
+var usdPerBtc;
+var handlerToCallAfterFindingBtcUsdRate = [];
+
+// prepare empty table
+var header = true;
+$('tr').each(function(){
+	if (header) {
+		header = false;
+		return true;
+	}
+	var row = $(this);
+	while (row.find('td').length < ColumnIndex.Max + 1) {
+		var td = document.createElement('td');
+		//$(td).html("");
+		row.append(td);
+	}
+});
+
+function setCell(rowId, columnIndex, value, opt_url) {
+	var rounded = Math.round(value);
+	var decimal = (rounded == value) ? 0 : 3;
+	value = value.formatMoney(decimal, '.', ',');
+	
+	var row = $('#' + rowId);
+	var cell = $(row.find('td')[columnIndex]);
+	
+	function makeLink(url, text) {
+		return "<a href='" + url + "'>" + text + "</a>";
+	}
+	cell.html(opt_url ? makeLink(opt_url, value) : value);
+}
+
+function getData(url, callback) {
+	result = $.getJSON('http://anyorigin.com/get?url=' + url + '&callback=?', callback);
+}
+
+function getDataAndFillTable(coin, tickerId, colIndex) {
+	var ticker = coin[tickerId];
+	if (!ticker)
+		return;
+		
+	getData(ticker.url, function(data) {
+		var parsedData = ticker.extractor(data.contents);
+		if (coin.id == 'bitcoin' && colIndex == ColumnIndex.BTC) {
+			colIndex = ColumnIndex.USD;
+			usdPerBtc = parsedData;
+			$(handlerToCallAfterFindingBtcUsdRate).each(function(){this();});
+		}
+		setCell(coin.id, colIndex, parsedData, ticker.url);
+		
+		if (!coin.fetchedData)
+			coin.fetchedData = {};
+		coin.fetchedData[tickerId] = parsedData;
+		if (Object.keys(coin.fetchedData).length == 2) {
+			coin.calculatedData = {};
+			function getData(id) {
+				if (coin.fetchedData[id])
+					return coin.fetchedData[id];
+				if (coin.calculatedData[id])
+					return coin.calculatedData[id];
+					
+				throw "Can't get data for id " + id;
+			}
+			if (!coin.fetchedData.totalCoins && coin.fetchedData.blockCount) {
+				coin.calculatedData.totalCoins = coin.fetchedData.blockCount * coin.coinsPerBlock;
+				setCell(coin.id, ColumnIndex.Coins, coin.calculatedData.totalCoins);
+			}
+			if (!coin.fetchedData.blockCount && coin.fetchedData.totalCoins) {
+				coin.calculatedData.blocks = coin.fetchedData.totalCoins / coin.coinsPerBlock;
+				setCell(coin.id, ColumnIndex.Blocks, coin.calculatedData.blocks);
+			}
+			
+			if (coin.id == 'bitcoin') {
+			  setCell('bitcoin', ColumnIndex.TotalUSD, getData('totalCoins') * getData('price'));
+			} else {
+				var totalBTC = getData('totalCoins') * getData('price');
+				setCell(coin.id, ColumnIndex.TotalBTC, totalBTC);
+			
+				function calcUSD() {
+					setCell(coin.id, ColumnIndex.USD, usdPerBtc * getData('price'));
+					setCell(coin.id, ColumnIndex.TotalUSD, usdPerBtc * totalBTC);
+				}
+				
+				if (usdPerBtc) {
+					// known BTC rate, calc now
+					calcUSD()
+				} else {
+					handlerToCallAfterFindingBtcUsdRate.push(calcUSD);
+				}
+			}
+		}
+	});
+}
+
+$(coinTypes).each(function() {
+	getDataAndFillTable(this, 'price', ColumnIndex.BTC);
+	getDataAndFillTable(this, 'blockCount', ColumnIndex.Blocks);
+	getDataAndFillTable(this, 'totalCoins', ColumnIndex.Coins);
+	
+	if (this.id == 'bitcoin')
+		setCell('bitcoin', ColumnIndex.BTC, 1);
+});
+
+</script>
+</body>
+</html>
