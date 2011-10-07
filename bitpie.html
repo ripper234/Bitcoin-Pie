@@ -1,0 +1,105 @@
+<html>
+<head>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.js"></script>
+</head>
+<body>
+<h1>The alternative Bitcoin Pie Page</h1>
+
+<table>
+<table border="1">
+<tr>
+<th></th>
+<th>Coins</th>
+<th>BTC</th>
+<th>USD</th>
+<th>Total USD</th>
+<th>Percent</th>
+</tr>
+<tr id='bitcoin'>
+<td>Bitcoin</td>
+</tr>
+<tr id='namecoin'>
+<td>Namecoin</td>
+</tr>
+</table>
+
+<script type="text" src="http://google.com?callback=some_func"></script>
+
+<script type="text/javascript">
+
+var ColumnIndex = {
+	Coins: 1,
+	BTC: 2,
+	USD: 3,
+	TotalUSD : 4,
+	Percent : 5,
+	
+	Max : 5
+}
+
+var Extractors = {
+	json : function(path) {
+		return function(obj) {
+			var parts = path.split('.');
+			if (parts.length < 1)
+				throw ("Failed to parse path: " + path);
+			
+			$(parts).each(function() {
+				obj = obj[this];
+			});
+			return obj;
+		}
+	},
+	nop : function() {return function(x){return x;};}
+};
+
+
+
+<!-- This is where you define the different coins -->
+var coinTypes = 
+	[{	id: 'bitcoin', 
+		price : {url : 'https://mtgox.com/api/0/data/ticker.php', extractor : Extractors.json('contents.ticker.avg')}, 
+		blockcount : {url : 'http://blockexplorer.com/q/getblockcount'}, extractor : Extractors.nop}
+	];
+
+	
+	
+// prepare empty table
+var header = true;
+$('tr').each(function(){
+	if (header) {
+		header = false;
+		return true;
+	}
+	var row = $(this);
+	while (row.find('td').length < ColumnIndex.Max + 1) {
+		var td = document.createElement('td');
+		//$(td).html("");
+		row.append(td);
+	}
+});
+
+function setCell(rowId, columnIndex, value) {
+	var row = $('#' + rowId);
+	var cell = $(row.find('td')[columnIndex]);
+	cell.html(value);
+}
+
+function getData(url, callback) {
+	result = $.getJSON('http://anyorigin.com/get?url=' + url + '&callback=?', callback);
+}
+
+function getDataAndFillTable(ticker, rowId, colIndex) {
+	getData(ticker.url, function(data) {
+		var parsedData = ticker.extractor(data);
+		setCell(rowId, colIndex, parsedData);
+	});
+}
+
+$(coinTypes).each(function() {
+	getDataAndFillTable(this.price, this.id, ColumnIndex.USD);
+});
+
+</script>
+</body>
+</html>
