@@ -30,12 +30,10 @@
 <th title="Total market cap in USD">Total USD</th>
 <!-- <th title="Percent of the overall pie (TBD)">Percent</th> -->
 </tr>
-<tr id='bitcoin'>
-<td>Bitcoin</td>
-</tr>
-<tr id='namecoin'>
-<td>Namecoin</td>
-</tr>
+<!-- TODO: Calculate these from the coinTypes -->
+<tr id='bitcoin'><td>Bitcoin</td></tr>
+<tr id='namecoin'><td>Namecoin</td></tr>
+<tr id='tenebrix'><td>Tenebrix</td></tr>
 </table>
 
 <div id='piebackground'></div>
@@ -82,7 +80,12 @@ var coinTypes =
 			'<th>Low:</th><td class="coin">(\\d+(?:\\.)\\d+)',
 			'<th>High:</th><td class="coin">(\\d+(?:\\.)\\d+)')}, 
 		totalCoins : {url : 'http://blockexplorer.sytes.net/chain/Namecoin/q/totalbc', extractor : Extractors.nop},
-		coinsPerBlock : 50},	
+		coinsPerBlock : 50},
+	{	id: 'tenebrix',
+		price : {url : 'https://btc-e.com/tbx_exchanger', extractor : Extractors.regex(
+			"<span id='min_price'>(\\d+(?:\\.)\\d+)",
+			"<span id='max_price'>(\\d+(?:\\.)\\d+)")},
+		totalCoins : {url : 'http://blockexplorer.sytes.net/chain/Tenebrix/q/totalbc', extractor : Extractors.nop}}
 	];
 
 	
@@ -174,7 +177,7 @@ function getDataAndFillTable(coin, tickerId, colIndex) {
 				coin.calculatedData.totalCoins = coin.fetchedData.blockCount * coin.coinsPerBlock;
 				setCell(coin.id, ColumnIndex.Coins, coin.calculatedData.totalCoins);
 			}
-			if (!coin.fetchedData.blockCount && coin.fetchedData.totalCoins) {
+			if (!coin.fetchedData.blockCount && coin.fetchedData.totalCoins && ticker.coinsPerBlock) {
 				coin.calculatedData.blocks = coin.fetchedData.totalCoins / coin.coinsPerBlock;
 				setCell(coin.id, ColumnIndex.Blocks, coin.calculatedData.blocks);
 			}
