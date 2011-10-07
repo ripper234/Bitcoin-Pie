@@ -85,7 +85,8 @@ var coinTypes =
 		price : {url : 'https://btc-e.com/tbx_exchanger', extractor : Extractors.regex(
 			"<span id='min_price'>(\\d+(?:\\.)\\d+)",
 			"<span id='max_price'>(\\d+(?:\\.)\\d+)")},
-		totalCoins : {url : 'http://blockexplorer.sytes.net/chain/Tenebrix/q/totalbc', extractor : Extractors.nop}}
+		totalCoins : {url : 'http://blockexplorer.sytes.net/chain/Tenebrix/q/totalbc', extractor : Extractors.nop},
+		coinsPerBlock : 25}
 	];
 
 	
@@ -177,7 +178,7 @@ function getDataAndFillTable(coin, tickerId, colIndex) {
 				coin.calculatedData.totalCoins = coin.fetchedData.blockCount * coin.coinsPerBlock;
 				setCell(coin.id, ColumnIndex.Coins, coin.calculatedData.totalCoins);
 			}
-			if (!coin.fetchedData.blockCount && coin.fetchedData.totalCoins && ticker.coinsPerBlock) {
+			if (!coin.fetchedData.blockCount && coin.fetchedData.totalCoins) {
 				coin.calculatedData.blocks = coin.fetchedData.totalCoins / coin.coinsPerBlock;
 				setCell(coin.id, ColumnIndex.Blocks, coin.calculatedData.blocks);
 			}
