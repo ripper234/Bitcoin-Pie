@@ -64,6 +64,11 @@ var Extractors = {
 			return (low + high) / 2;
 		}
 	},
+	avg : function(extractBuy, extractSell) {
+		return function(obj) {
+			return (extractBuy(obj) + extractSell(obj)) / 2;
+		}
+	},
 	nop : 	function(obj) { return obj;}
 };
 
@@ -84,7 +89,8 @@ function createCoinBySytesAndBtce(name, symbol, url, blockreward) {
 var coinTypes = 
 	[{	name: 'Bitcoin',
 		url: 'http://bitcoin.org',
-		price : {url : 'https://mtgox.com/api/0/data/ticker.php', extractor : Extractors.json('ticker.avg')}, 
+		price : {url : 'https://mtgox.com/api/0/data/ticker.php', //extractor : Extractors.json('ticker.avg')}, 
+			extractor : Extractors.avg(Extractors.json('ticker.buy'), Extractors.json('ticker.sell'))},
 		blockCount : {url : 'http://blockexplorer.com/q/getblockcount', extractor : Extractors.nop},
 		coinsPerBlock : 50},
 	createCoinBySytesAndBtce('Tenebrix', 'tbx', 'http://tenebrix.org', 25),
