@@ -88,7 +88,10 @@ function createCoinBySytesAndBtce(name, symbol, url, blockreward) {
 	return {
 		name: name,
 		url: url,
-		price : symbol == null ? null : {url : 'https://btc-e.com/' + symbol + '_exchanger', extractor : Extractors.regex(
+		price : symbol == null ? null : 
+			{url : 'https://btc-e.com/exchange/' + symbol + '_btc',
+				//'https://btc-e.com/' + symbol + '_exchanger', 
+				extractor : Extractors.regex(
 			"<span id='min_price'>(\\d+(?:\\.)\\d+)",
 			"<span id='max_price'>(\\d+(?:\\.)\\d+)")},
 		totalCoins : {url : 'http://blockexplorer.sytes.net/chain/' + name + '/q/totalbc', extractor : Extractors.nop},
@@ -115,7 +118,7 @@ var coinTypes =
 		coinsPerBlock : 50},
 	createCoinBySytesAndBtce('SolidCoin', 'sc', 'http://solidcoin.info/', 25),
 	createCoinBySytesAndBtce('GeistGeld', 'gg', 'http://www.geistgeld.org/', 7),
-	createCoinBySytesAndBtce('Litecoin', null, 'http://www.litecoin.org/', 50)
+	createCoinBySytesAndBtce('Litecoin',  'ltc', 'http://www.litecoin.org/', 50)
 	];
 
 	
