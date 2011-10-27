@@ -20,7 +20,6 @@
 <body>
 <h1>The Alternative Bitcoin Pie Page <small>(<a href="https://github.com/ripper234/Bitcoin-Pie">github</a>)</small></h1>
 
-<h2>26/10/2011 - Bitcoin Pie is currently broken, because of an issue with <a href="http://anyorigin.com/">anyorigin.com</a> - I plan to fix it this weekend.</h2>
 <p>This page shows the value and <a href="http://en.wikipedia.org/wiki/Market_capitalization">market cap</a> of Bitcoin and some of its clones.</p>
 
 <table>
@@ -163,7 +162,10 @@ function setCell(rowId, column, value, opt_url) {
 }
 
 function getData(url, callback) {
-	result = $.getJSON('http://anyorigin.com/get?url=' + url + '&callback=?', callback);
+	//result = $.getJSON('http://anyorigin.com/get?url=' + url + '&callback=?', callback);
+	
+	// Whateverorigin is like anyorigin, only open source, with better https support
+	result = $.getJSON('http://whateverorigin.com/get?url=' + url + '&callback=?', callback);
 }
 
 function getDataAndFillTable(coin, tickerId, column) {
