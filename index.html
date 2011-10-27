@@ -102,7 +102,7 @@ function createCoinBySytesAndBtce(name, symbol, url, blockreward) {
 
 <!-- This is where you define the different coins -->
 var coinTypes = 
-	[/*{	name: 'Bitcoin',
+	[{	name: 'Bitcoin',
 		url: 'http://bitcoin.org',
 		price : {url : 'https://mtgox.com/api/0/data/ticker.php', //extractor : Extractors.json('ticker.avg')}, 
 			extractor : Extractors.avg(Extractors.json('ticker.buy'), Extractors.json('ticker.sell'))},
@@ -117,7 +117,7 @@ var coinTypes =
 		totalCoins : {url : 'http://blockexplorer.sytes.net/chain/Namecoin/q/totalbc', extractor : Extractors.nop},
 		coinsPerBlock : 50},
 	createCoinBySytesAndBtce('SolidCoin', 'sc', 'http://solidcoin.info/', 25),
-	createCoinBySytesAndBtce('GeistGeld', 'gg', 'http://www.geistgeld.org/', 7),*/
+	createCoinBySytesAndBtce('GeistGeld', 'gg', 'http://www.geistgeld.org/', 7),
 	createCoinBySytesAndBtce('Litecoin',  'ltc', 'http://www.litecoin.org/', 50)
 	];
 
