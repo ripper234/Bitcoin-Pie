@@ -151,6 +151,7 @@ function makeLink(url, text) {
 }
 	
 function setCell(rowId, column, value, opt_url) {
+	value = value * 1;
 	var rounded = Math.round(value);
 	var decimal = (rounded == value) ? 0 : column.decimals;
 	value = value.formatMoney(decimal, '.', ',');
@@ -165,6 +166,7 @@ function getData(url, callback) {
 	//result = $.getJSON('http://anyorigin.com/get?url=' + url + '&callback=?', callback);
 	
 	// Whateverorigin is like anyorigin, only open source, with better https support
+	//result = $.getJSON('http://localhost:9000/get?url=' + url + '&callback=?', callback);
 	result = $.getJSON('http://whateverorigin.org/get?url=' + url + '&callback=?', callback);
 }
 
