@@ -84,17 +84,17 @@ var Extractors = {
 	nop : 	function(obj) { return obj;}
 };
 
-function createCoinBySytesAndBtce(name, symbol, url, blockreward) {
+function createCoinBySytesAndBtce(name, sytes_name, btce_symbol, url, blockreward) {
 	return {
 		name: name,
 		url: url,
-		price : symbol == null ? null : 
-			{url : 'https://btc-e.com/exchange/' + symbol + '_btc',
-				//'https://btc-e.com/' + symbol + '_exchanger', 
+		price : btce_symbol == null ? null : 
+			{url : 'https://btc-e.com/exchange/' + btce_symbol + '_btc',
+				//'https://btc-e.com/' + btce_symbol + '_exchanger', 
 				extractor : Extractors.regex(
 			"<span id=[\"']min_price[\"']>(\\d+(?:\\.)\\d+)",
 			"<span id=[\"']max_price[\"']>(\\d+(?:\\.)\\d+)")},
-		totalCoins : {url : 'http://blockexplorer.sytes.net/chain/' + name + '/q/totalbc', extractor : Extractors.nop},
+		totalCoins : {url : 'http://blockexplorer.sytes.net/chain/' + sytes_name + '/q/totalbc', extractor : Extractors.nop},
 		coinsPerBlock : blockreward
 	};
 }
@@ -108,7 +108,7 @@ var coinTypes =
 			extractor : Extractors.avg(Extractors.json('ticker.buy'), Extractors.json('ticker.sell'))},
 		blockCount : {url : 'http://blockexplorer.com/q/getblockcount', extractor : Extractors.nop},
 		coinsPerBlock : 50},
-	createCoinBySytesAndBtce('Tenebrix', 'tbx', 'http://tenebrix.org', 25),
+	createCoinBySytesAndBtce('Tenebrix', 'Tenebrix', 'tbx', 'http://tenebrix.org', 25),
 	{	name: 'Namecoin', 
 		url: 'http://dot-bit.org/',
 		price : {url : 'https://exchange.bitparking.com/main', extractor : Extractors.regex(
@@ -116,11 +116,15 @@ var coinTypes =
 			'<th>High:</th><td class="coin">(\\d+(?:\\.)\\d+)')}, 
 		totalCoins : {url : 'http://blockexplorer.sytes.net/chain/Namecoin/q/totalbc', extractor : Extractors.nop},
 		coinsPerBlock : 50},
-	createCoinBySytesAndBtce('GeistGeld', 'gg', 'http://www.geistgeld.org/', 7),
-	createCoinBySytesAndBtce('Litecoin',  'ltc', 'http://www.litecoin.org/', 50)
+	createCoinBySytesAndBtce('GeistGeld', 'GeistGeld', 'gg', 'http://www.geistgeld.org/', 7),
+	createCoinBySytesAndBtce('Litecoin',  'Litecoin', 'ltc', 'http://www.litecoin.org/', 50),
 
-	// Retired:
-	// createCoinBySytesAndBtce('SolidCoin', 'sc', 'http://solidcoin.info/', 25),
+	// Not working
+	
+	// whateverorigin has a bug with URL that contain ' '
+	// createCoinBySytesAndBtce('SolidCoin', 'SolidCoin 1', 'sc', 'http://solidcoin.info/', 25),
+	// createCoinBySytesAndBtce('Rucoin', 'ruc', 'http://rucoin.org/', 50),
+	
 	];
 
 	
